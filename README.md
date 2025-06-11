@@ -1,55 +1,73 @@
-# Soroswap Test API Fees
 
-This repository is for testing the usage of the Stellar Router SDK to include a fee on top of the Soroswap aggregator contract. The goal is to demonstrate how you can programmatically add a fee to swaps performed via the Soroswap aggregator, enabling fee support.
 
-It includes examples of how to build, simulate, and send transactions that perform swaps and transfers using Soroswap and other supported protocols, with the ability to add custom fee logic.
+# Stellar **2‑of‑3 Multisig** + **Soroban Swap** Proof‑of‑Concept
+
+This mini‑repo shows how a **classic Stellar multisig account** can call a **Soroban smart‑contract method** (here a token‑swap on Soroswap) with nothing more than the normal L1 signing rules.  
+It is a complete, reproducible walkthrough you can run on **TESTNET** in under a minute.
+
+---
+
+## What the script does
+
+| Step | Action | Why it matters |
+|------|--------|----------------|
+| 1 | Generates one master key & three signer key‑pairs (**Keypair.random()**) | Keeps everything self‑contained—no secret keys needed. |
+| 2 | Funds the master account with **Friendbot** | Ensures the new account exists & has lumens for fees. |
+| 3 | Sends a **`SetOptions`** transaction that<br>• adds the three signers (weight = 1 each)<br>• sets *medium & high thresholds* = 2 | That creates a **2‑of‑3** multisig account on classic Stellar. |
+| 4 | Builds a `swap_exact_tokens_for_tokens` call to the **Soroswap router** contract | Demonstrates a real Soroban contract invocation that will move tokens. |
+| 5 | Signs the swap TX with **signer 1 + signer 2** (2 signatures ≥ threshold) and **simulates** it | Proves that ordinary multisig signatures satisfy `require_auth()` inside Soroban. |
+
+> **Result:** The simulation returns **SUCCESS** without writing to the ledger. Swap execution would succeed exactly the same way if you replaced the final `simulate` with a `sendTransaction`.
+
+---
+
+## Running it yourself
+
+```bash
+# 1. Install deps
+pnpm install      # or npm i / yarn
+
+# 2. Run
+pnpm ts-node src/index.ts
+```
+
+You will see:
+
+* Public keys for the master & 3 signers  
+* Horizon response for the multisig‑setup transaction  
+* Simulation JSON for the swap signed by 2 of 3 signers  
+
+Feel free to replace the contract address, token addresses, or amount in `src/index.ts`.
+
+---
 
 ## Prerequisites
-- Node.js (v18 or higher recommended)
-- npm or yarn
 
-## Setup
-1. **Clone the repository:**
-   ```sh
-   git clone https://github.com/joaquinsoza/stellar-router-sdk-aggregator-fee.git
-   cd stellar-router-sdk-aggregator-fee
-   ```
-2. **Install dependencies:**
-   ```sh
-   npm install
-   # or
-   yarn install
-   ```
-3. **Configure environment variables:**
-   Create a `.env` file in the root directory with the following variables:
-   ```env
-   PRIVATE_KEY=YOUR_STELLAR_SECRET_KEY
-   RECEIVER_PUBLIC_KEY=DESTINATION_PUBLIC_KEY
-   ```
-   - `PRIVATE_KEY`: The secret key of the account that will sign and send transactions.
-   - `RECEIVER_PUBLIC_KEY`: The public key of the account that will receive tokens in the transfer example.
+* Node ≥ 18
+* `pnpm` (or your favourite package manager)
+* Internet access (to hit Friendbot, Horizon, and `https://soroban-testnet.stellar.org`)
 
-## How to Use
-1. **Edit the script if needed:**
-   - The main logic is in `src/index.ts`. You can adjust the swap/transfer parameters, fee logic, or contracts as needed.
-2. **Run the script:**
-   ```sh
-   npm start
-   # or
-   yarn start
-   # or directly with tsx
-   npx tsx src/index.ts
-   ```
-   The script will:
-   - Build and simulate a swap and transfer transaction
-   - Add a fee on top of the Soroswap aggregator transaction
-   - Send the transaction to the Stellar network
-   - Output the transaction hash and status
+Everything else is handled by the script—no environment variables, no funded keys, no Docker.
 
-## Notes
-- This script is for demonstration and testing purposes. Do not use your mainnet private key with significant funds unless you understand the risks.
-- Make sure your account has enough XLM to cover transaction fees.
-- The script uses the public Soroban RPC endpoint: `https://mainnet.sorobanrpc.com`.
+---
+
+## Customising
+
+* **Thresholds / weights** – tweak the `SetOptions` ops.  
+* **Additional signers** – just add more `setOptions({ signer: … })` lines.  
+* **Mainnet** – swap the Horizon & RPC URLs, **remove Friendbot funding**, and **fund the master account yourself**. *(Be careful – on mainnet these ops are irreversible and cost real lumens.)*  
+* **Different contract** – change the `router` address and the method / args.
+
+---
+
+## Key takeaways
+
+1. **Classic multisig works for Soroban.** The built‑in “Stellar Account” authorizer sums the signature weights exactly as Horizon does for payments.  
+2. **No extra smart‑wallet contract is needed** unless you want per‑method thresholds or unconventional auth schemes.  
+3. **Simulation first, signing second.** You must run `simulateTransaction` before you attach the signer signatures so the host can produce the AuthEntries.
+
+---
 
 ## License
-MIT
+
+MIT – do whatever you like, just don’t blame me if you lose money in production. 🌟
