@@ -92,14 +92,52 @@ Run the original demonstration script:
 npm start
 ```
 
-## File Flow
+## File Flow & Candidate XDR System
 
 The scripts create and use these intermediate files:
+
+### Individual Signer Files:
 - `unsigned-tx.xdr` - Transaction prepared but not signed
 - `signed-by-signer-1.xdr` - Transaction signed by signer 1
 - `signed-by-signer-2.xdr` - Transaction signed by signer 2
 - `signed-by-signer-3.xdr` - Transaction signed by signer 3
-- Files are automatically cleaned up after successful submission
+
+### Candidate XDR System:
+- **`signed-xdr-candidate.xdr`** - **Latest signed version** (always updated after each signature)
+
+### How the Candidate System Works:
+
+1. **After each signature**, the script saves two files:
+   - A specific signer file (e.g., `signed-by-signer-1.xdr`)
+   - The candidate file (`signed-xdr-candidate.xdr`) with the latest signed version
+
+2. **The send script** always reads from `signed-xdr-candidate.xdr`, regardless of how many signers have signed
+
+3. **Benefits**:
+   - You can sign with any number of signers (1, 2, or 3)
+   - The send script works with any combination of signatures
+   - No need to track which specific signer file to use
+   - Flexible signing order (you can sign with signer 2 first, then signer 1, etc.)
+
+### Example Workflow:
+```bash
+# 1. Prepare transaction
+npm run prepare-tx
+# Creates: unsigned-tx.xdr
+
+# 2. Sign with signer 1
+npm run sign-1
+# Creates: signed-by-signer-1.xdr + signed-xdr-candidate.xdr
+
+# 3. Sign with signer 2
+npm run sign-2
+# Creates: signed-by-signer-2.xdr + signed-xdr-candidate.xdr (updated)
+
+# 4. Send transaction (reads from candidate)
+npm run send-tx
+# Reads: signed-xdr-candidate.xdr
+# Cleans up: all intermediate files
+```
 
 ## Typical Usage
 
