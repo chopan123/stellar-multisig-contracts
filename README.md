@@ -1,73 +1,105 @@
+# Stellar Multisig Contracts
 
+This project demonstrates a 2-of-3 multisig workflow with Stellar and Soroban contracts.
 
-# Stellar **2‑of‑3 Multisig** + **Soroban Swap** Proof‑of‑Concept
+## Setup
 
-This mini‑repo shows how a **classic Stellar multisig account** can call a **Soroban smart‑contract method** (here a token‑swap on Soroswap) with nothing more than the normal L1 signing rules.  
-It is a complete, reproducible walkthrough you can run on **TESTNET** in under a minute.
+1. Copy `.env.example` to `.env` and fill in your values:
+   ```bash
+   cp .env.example .env
+   ```
 
----
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-## What the script does
+## Environment Variables
 
-| Step | Action | Why it matters |
-|------|--------|----------------|
-| 1 | Generates one master key & three signer key‑pairs (**Keypair.random()**) | Keeps everything self‑contained—no secret keys needed. |
-| 2 | Funds the master account with **Friendbot** | Ensures the new account exists & has lumens for fees. |
-| 3 | Sends a **`SetOptions`** transaction that<br>• adds the three signers (weight = 1 each)<br>• sets *medium & high thresholds* = 2 | That creates a **2‑of‑3** multisig account on classic Stellar. |
-| 4 | Builds a `swap_exact_tokens_for_tokens` call to the **Soroswap router** contract | Demonstrates a real Soroban contract invocation that will move tokens. |
-| 5 | Signs the swap TX with **signer 1 + signer 2** (2 signatures ≥ threshold) and **simulates** it | Proves that ordinary multisig signatures satisfy `require_auth()` inside Soroban. |
+Create a `.env` file with the following variables:
 
-> **Result:** The simulation returns **SUCCESS** without writing to the ledger. Swap execution would succeed exactly the same way if you replaced the final `simulate` with a `sendTransaction`.
+```env
+# Multisig Master Account Secret Key
+MASTER_SECRET=your_master_secret_key_here
 
----
+# Signer Public Keys (3 signers for 2-of-3 multisig)
+SIGNER_PUBLIC_0=your_signer_0_public_key_here
+SIGNER_PUBLIC_1=your_signer_1_public_key_here
+SIGNER_PUBLIC_2=your_signer_2_public_key_here
 
-## Running it yourself
-
-```bash
-# 1. Install deps
-pnpm install      # or npm i / yarn
-
-# 2. Run
-pnpm ts-node src/index.ts
+# Network Configuration
+SOROBAN_RPC_URL=https://soroban-testnet.stellar.org
+HORIZON_URL=https://horizon-testnet.stellar.org
 ```
 
-You will see:
+## Scripts
 
-* Public keys for the master & 3 signers  
-* Horizon response for the multisig‑setup transaction  
-* Simulation JSON for the swap signed by 2 of 3 signers  
+### Setup
 
-Feel free to replace the contract address, token addresses, or amount in `src/index.ts`.
+**Setup Multisig Account** - Initialize the 2-of-3 multisig configuration:
+```bash
+npm run setup
+```
 
----
+This script will:
+- Fund the master account via Friendbot
+- Configure the multisig with three signers
+- Set thresholds to require 2 signatures
+- Display the final account configuration
 
-## Prerequisites
+### Transaction Workflow
 
-* Node ≥ 18
-* `pnpm` (or your favourite package manager)
-* Internet access (to hit Friendbot, Horizon, and `https://soroban-testnet.stellar.org`)
+1. **Prepare Transaction** - Creates unsigned XDR:
+   ```bash
+   npm run prepare-tx
+   ```
 
-Everything else is handled by the script—no environment variables, no funded keys, no Docker.
+2. **Sign with Signer 1** - Signs the XDR with first signer:
+   ```bash
+   npm run sign-1
+   ```
 
----
+3. **Sign with Signer 2** - Signs the XDR with second signer:
+   ```bash
+   npm run sign-2
+   ```
 
-## Customising
+4. **Send Transaction** - Submits the fully signed XDR:
+   ```bash
+   npm run send-tx
+   ```
 
-* **Thresholds / weights** – tweak the `SetOptions` ops.  
-* **Additional signers** – just add more `setOptions({ signer: … })` lines.  
-* **Mainnet** – swap the Horizon & RPC URLs, **remove Friendbot funding**, and **fund the master account yourself**. *(Be careful – on mainnet these ops are irreversible and cost real lumens.)*  
-* **Different contract** – change the `router` address and the method / args.
+### Complete Workflow
 
----
+Run the entire multisig workflow in one command:
+```bash
+npm run workflow
+```
 
-## Key takeaways
+### Original Demo
 
-1. **Classic multisig works for Soroban.** The built‑in “Stellar Account” authorizer sums the signature weights exactly as Horizon does for payments.  
-2. **No extra smart‑wallet contract is needed** unless you want per‑method thresholds or unconventional auth schemes.  
-3. **Simulation first, signing second.** You must run `simulateTransaction` before you attach the signer signatures so the host can produce the AuthEntries.
+Run the original demonstration script:
+```bash
+npm start
+```
 
----
+## File Flow
 
-## License
+The scripts create and use these intermediate files:
+- `unsigned-tx.xdr` - Transaction prepared but not signed
+- `signed-by-signer-1.xdr` - Transaction signed by signer 1
+- `fully-signed-tx.xdr` - Transaction signed by both signers
+- Files are automatically cleaned up after successful submission
 
-MIT – do whatever you like, just don’t blame me if you lose money in production. 🌟
+## Typical Usage
+
+1. **First time setup**: Run `npm run setup` to configure the multisig account
+2. **Create transactions**: Run `npm run prepare-tx` to create a new transaction
+3. **Sign transactions**: Use `npm run sign-1` and `npm run sign-2` to sign
+4. **Submit transactions**: Use `npm run send-tx` to submit to the network
+
+## Security Notes
+
+- Never commit your `.env` file (it's in `.gitignore`)
+- Keep your secret keys secure
+- This is for demonstration purposes - use proper key management in production
