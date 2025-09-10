@@ -38,9 +38,9 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 // ---------------------------------------------------------------------
-// 0. Soroban RPC (TESTNET)
-const rpc = new SorobanRpc.Server("https://soroban-testnet.stellar.org");
-const horizon = new Horizon.Server("https://horizon-testnet.stellar.org");
+// 0. Soroban RPC and Horizon (from environment variables)
+const rpc = new SorobanRpc.Server(process.env.SOROBAN_RPC_URL!);
+const horizon = new Horizon.Server(process.env.HORIZON_URL!);
 
 // ---------------------------------------------------------------------
 // 1. Generate key‑pairs from environment variables
