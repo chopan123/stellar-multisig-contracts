@@ -1,12 +1,13 @@
 /**
  * Send Transaction Script
  * 
- * This script loads a fully signed XDR transaction and submits it to the network.
+ * This script loads a signed XDR transaction and submits it to the network.
  */
 
 import {
   Networks,
   Transaction,
+  TransactionBuilder,
 } from "@stellar/stellar-sdk";
 import { rpc as SorobanRpc } from "@stellar/stellar-sdk";
 import * as dotenv from "dotenv";
@@ -23,16 +24,16 @@ const rpc = new SorobanRpc.Server(process.env.SOROBAN_RPC_URL!);
 // Main flow
 (async () => {
   try {
-    // Check if fully signed transaction exists
-    if (!fs.existsSync("fully-signed-tx.xdr")) {
-      throw new Error("fully-signed-tx.xdr not found. Run sign-tx-signer-2.ts first.");
+    // Check if signed candidate exists
+    if (!fs.existsSync("signed-xdr-candidate.xdr")) {
+      throw new Error("signed-xdr-candidate.xdr not found. Run sign-tx.ts first.");
     }
 
-    // Load the fully signed transaction
-    const signedXdr = fs.readFileSync("fully-signed-tx.xdr", "utf8");
+    // Load the signed transaction
+    const signedXdr = fs.readFileSync("signed-xdr-candidate.xdr", "utf8");
     const tx = TransactionBuilder.fromXDR(signedXdr, Networks.TESTNET);
 
-    console.log("📄 Loaded fully signed transaction");
+    console.log("📄 Loaded signed transaction from signed-xdr-candidate.xdr");
     console.log("🚀 Submitting transaction to network...");
 
     // Submit the transaction
@@ -42,18 +43,20 @@ const rpc = new SorobanRpc.Server(process.env.SOROBAN_RPC_URL!);
     console.log("📄 Result:", result);
     
     // Clean up intermediate files
-    if (fs.existsSync("unsigned-tx.xdr")) {
-      fs.unlinkSync("unsigned-tx.xdr");
-      console.log("🧹 Cleaned up unsigned-tx.xdr");
-    }
-    if (fs.existsSync("signed-by-signer-1.xdr")) {
-      fs.unlinkSync("signed-by-signer-1.xdr");
-      console.log("🧹 Cleaned up signed-by-signer-1.xdr");
-    }
-    if (fs.existsSync("fully-signed-tx.xdr")) {
-      fs.unlinkSync("fully-signed-tx.xdr");
-      console.log("🧹 Cleaned up fully-signed-tx.xdr");
-    }
+    const filesToClean = [
+      "unsigned-tx.xdr",
+      "signed-by-signer-1.xdr", 
+      "signed-by-signer-2.xdr",
+      "signed-by-signer-3.xdr",
+      "signed-xdr-candidate.xdr"
+    ];
+    
+    filesToClean.forEach(file => {
+      if (fs.existsSync(file)) {
+        fs.unlinkSync(file);
+        console.log(`🧹 Cleaned up ${file}`);
+      }
+    });
     
   } catch (error) {
     console.error("❌ Error sending transaction:", error);

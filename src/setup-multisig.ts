@@ -30,20 +30,22 @@ const horizon = new Horizon.Server(process.env.HORIZON_URL!);
 // ---------------------------------------------------------------------
 // 1. Generate key‑pairs from environment variables
 const multisigMaster = Keypair.fromSecret(process.env.MASTER_SECRET!);
-const signer1 = Keypair.fromPublicKey(process.env.SIGNER_PUBLIC_0!);
-const signer2 = Keypair.fromPublicKey(process.env.SIGNER_PUBLIC_1!);
-const signer3 = Keypair.fromPublicKey(process.env.SIGNER_PUBLIC_2!);
 
-console.log("\n��  Multisig master:", multisigMaster.publicKey());
-console.log("🔑  Signer 1       :", signer1.publicKey());
-console.log("🔑  Signer 2       :", signer2.publicKey());
-console.log("🔑  Signer 3       :", signer3.publicKey(), "\n");
+// Get signer public keys from environment variables
+const signer1Pub = process.env.SIGNER_PUBLIC_0!;
+const signer2Pub = process.env.SIGNER_PUBLIC_1!;
+const signer3Pub = process.env.SIGNER_PUBLIC_2!;
+
+console.log("\n🔑  Multisig master:", multisigMaster.publicKey());
+console.log("🔑  Signer 1       :", signer1Pub);
+console.log("🔑  Signer 2       :", signer2Pub);
+console.log("🔑  Signer 3       :", signer3Pub, "\n");
 
 // ---------------------------------------------------------------------
 // Utility helpers
 
 async function fundAccount(kp: Keypair) {
-  console.log("💰 Funding account via Friendbot...");
+  console.log("�� Funding account via Friendbot...");
   const resp = await fetch(
     `https://friendbot.stellar.org?addr=${kp.publicKey()}`
   );
@@ -95,17 +97,17 @@ async function sendHorizonTx(
       )
       .addOperation(
         Operation.setOptions({
-          signer: { ed25519PublicKey: signer1.publicKey(), weight: 1 },
+          signer: { ed25519PublicKey: signer1Pub, weight: 1 },
         })
       )
       .addOperation(
         Operation.setOptions({
-          signer: { ed25519PublicKey: signer2.publicKey(), weight: 1 },
+          signer: { ed25519PublicKey: signer2Pub, weight: 1 },
         })
       )
       .addOperation(
         Operation.setOptions({
-          signer: { ed25519PublicKey: signer3.publicKey(), weight: 1 },
+          signer: { ed25519PublicKey: signer3Pub, weight: 1 },
         })
       )
       .build();
@@ -122,9 +124,9 @@ async function sendHorizonTx(
       const updatedAccount = await horizon.loadAccount(multisigMaster.publicKey());
       console.log("\n📊 Updated account info:");
       console.log("   Master weight:", updatedAccount.masterWeight);
-      console.log("   Low threshold:", updatedAccount.lowThreshold);
-      console.log("   Med threshold:", updatedAccount.medThreshold);
-      console.log("   High threshold:", updatedAccount.highThreshold);
+      console.log("   Low threshold:", updatedAccount.thresholds.low_threshold);
+      console.log("   Med threshold:", updatedAccount.thresholds.med_threshold);
+      console.log("   High threshold:", updatedAccount.thresholds.high_threshold);
       console.log("   Signers:", updatedAccount.signers.length);
       
       console.log("\n🎉 Multisig account is ready!");

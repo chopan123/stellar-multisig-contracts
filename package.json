@@ -7,8 +7,9 @@
     "start": "tsx src/index.ts",
     "setup": "tsx src/setup-multisig.ts",
     "prepare-tx": "tsx src/prepare-tx.ts",
-    "sign-1": "tsx src/sign-tx-signer-1.ts",
-    "sign-2": "tsx src/sign-tx-signer-2.ts",
+    "sign-1": "tsx src/sign-tx.ts 1",
+    "sign-2": "tsx src/sign-tx.ts 2",
+    "sign-3": "tsx src/sign-tx.ts 3",
     "send-tx": "tsx src/send-tx.ts",
     "workflow": "tsx src/run-multisig-workflow.ts"
   },
