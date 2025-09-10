@@ -36,7 +36,13 @@ import * as dotenv from "dotenv";
 
 // Load environment variables
 dotenv.config();
-
+console.log("Loaded environment variables:");
+console.log("  SOROBAN_RPC_URL:", process.env.SOROBAN_RPC_URL);
+console.log("  HORIZON_URL:", process.env.HORIZON_URL);
+console.log("  MASTER_SECRET:", process.env.MASTER_SECRET);
+console.log("  SIGNER_PUBLIC_0:", process.env.SIGNER_PUBLIC_0);
+console.log("  SIGNER_PUBLIC_1:", process.env.SIGNER_PUBLIC_1);
+console.log("  SIGNER_PUBLIC_2:", process.env.SIGNER_PUBLIC_2);
 // ---------------------------------------------------------------------
 // 0. Soroban RPC and Horizon (from environment variables)
 const rpc = new SorobanRpc.Server(process.env.SOROBAN_RPC_URL!);
@@ -45,9 +51,9 @@ const horizon = new Horizon.Server(process.env.HORIZON_URL!);
 // ---------------------------------------------------------------------
 // 1. Generate key‑pairs from environment variables
 const multisigMaster = Keypair.fromSecret(process.env.MASTER_SECRET!);
-const signer1 = Keypair.fromPublicKey(process.env.SIGNER_PUBLIC_0!);
-const signer2 = Keypair.fromPublicKey(process.env.SIGNER_PUBLIC_1!);
-const signer3 = Keypair.fromPublicKey(process.env.SIGNER_PUBLIC_2!);
+const signer1 = Keypair.fromSecret(process.env.SIGNER_SECRET_0!);
+const signer2 = Keypair.fromSecret(process.env.SIGNER_SECRET_1!);
+const signer3 = Keypair.fromSecret(process.env.SIGNER_SECRET_2!);
 
 console.log("\n🔑  Multisig master:", multisigMaster.publicKey());
 console.log("🔑  Signer 1       :", signer1.publicKey());
@@ -110,7 +116,12 @@ async function sendHorizonTx(
 // Main flow
 (async () => {
   // 2. Fund the new multisig account
-  await fundAccount(multisigMaster);
+  try {
+    await fundAccount(multisigMaster);
+
+  } catch (error) {
+    console.error("Error funding multisig account:", error);
+  }
 
   // 3. Configure multisig (2‑of‑3)
   let msAccount = await rpc.getAccount(multisigMaster.publicKey());
@@ -185,7 +196,24 @@ async function sendHorizonTx(
     .build();
 
   // -------------------------------------------------------------------
-  // 5. Simulate with 2‑of‑3 signatures
+  // Make failing transactions
+  // 5. Simulating failed transactions
+  try {
+    console.log("📝  Simulating swap with only one signer");
+    const swapSim = await sendTx(swapTx, false, [signer1]);
+    console.log(swapSim);
+  } catch (e) {
+    console.log("   → Expected failure:", (e as Error).message, "\n");
+  }
+  try {
+    console.log("📝  Simulating swap with master and one signer");
+    const swapSim = await sendTx(swapTx, false, [multisigMaster, signer1]);
+    console.log(swapSim);
+  } catch (e) {
+    console.log("   → Expected failure:", (e as Error).message, "\n");
+  }
+
+  // 6. Simulate with 2‑of‑3 signatures
   console.log("📝  Simulating swap with signer 1 + signer 2 …");
   const swapSim = await sendTx(swapTx, false, [signer1, signer3]);
   console.log(swapSim);
