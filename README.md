@@ -2,14 +2,16 @@
 
 This project demonstrates a 2-of-3 multisig workflow with Stellar and Soroban contracts.
 
-## Setup
+## Setup the environment
 
 1. Copy `.env.example` to `.env` and fill in your values:
+
    ```bash
    cp .env.example .env
    ```
 
 2. Install dependencies:
+
    ```bash
    npm install
    ```
@@ -39,27 +41,32 @@ HORIZON_URL=https://horizon-testnet.stellar.org
 
 ## Scripts
 
-### Setup
+### Setup Multisig account
 
 **Setup Multisig Account** - Initialize the 2-of-3 multisig configuration:
+
 ```bash
 npm run setup
 ```
 
 This script will:
+
 - Fund the master account via Friendbot
 - Configure the multisig with three signers
+- Set the weight of the master account to 0 (master can't sign)
 - Set thresholds to require 2 signatures
 - Display the final account configuration
 
 ### Transaction Workflow
 
 1. **Prepare Transaction** - Creates unsigned XDR:
+
    ```bash
    npm run prepare-tx
    ```
 
 2. **Sign Transaction** - Signs the XDR with specified signer:
+
    ```bash
    npm run sign-1    # Sign with signer 1
    npm run sign-2    # Sign with signer 2
@@ -67,6 +74,7 @@ This script will:
    ```
 
    Or use the script directly:
+
    ```bash
    tsx src/sign-tx.ts 1    # Sign with signer 1
    tsx src/sign-tx.ts 2    # Sign with signer 2
@@ -74,6 +82,7 @@ This script will:
    ```
 
 3. **Send Transaction** - Submits the fully signed XDR:
+
    ```bash
    npm run send-tx
    ```
@@ -81,6 +90,7 @@ This script will:
 ### Complete Workflow
 
 Run the entire multisig workflow in one command:
+
 ```bash
 npm run workflow
 ```
@@ -88,6 +98,7 @@ npm run workflow
 ### Original Demo
 
 Run the original demonstration script:
+
 ```bash
 npm start
 ```
@@ -96,16 +107,18 @@ npm start
 
 The scripts create and use these intermediate files:
 
-### Individual Signer Files:
+### Individual Signer Files
+
 - `unsigned-tx.xdr` - Transaction prepared but not signed
 - `signed-by-signer-1.xdr` - Transaction signed by signer 1
 - `signed-by-signer-2.xdr` - Transaction signed by signer 2
 - `signed-by-signer-3.xdr` - Transaction signed by signer 3
 
-### Candidate XDR System:
+### Candidate XDR System
+
 - **`signed-xdr-candidate.xdr`** - **Latest signed version** (always updated after each signature)
 
-### How the Candidate System Works:
+### How the Candidate System Works
 
 1. **After each signature**, the script saves two files:
    - A specific signer file (e.g., `signed-by-signer-1.xdr`)
@@ -119,7 +132,8 @@ The scripts create and use these intermediate files:
    - No need to track which specific signer file to use
    - Flexible signing order (you can sign with signer 2 first, then signer 1, etc.)
 
-### Example Workflow:
+### Example Workflow
+
 ```bash
 # 1. Prepare transaction
 npm run prepare-tx
